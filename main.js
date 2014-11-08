@@ -5,6 +5,8 @@ var canvas;
 function initGL(canvas) {
     try {
         gl = canvas.getContext("experimental-webgl");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
         gl.viewportWidth = canvas.width;
         gl.viewportHeight = canvas.height;
     } catch (e) {
@@ -126,6 +128,10 @@ function handleTextureLoaded(image, texture) {
     requestUpdate();
 }
 
+var rotationXAcceleration = 0;
+var rotationYAcceleration = 0;
+var rotationXVelocity = 0;
+var rotationYVelocity = 0;
 var rotationX = 0;
 var rotationY = 0;
 var position = vec3.fromValues(1.5,0,7);
@@ -139,6 +145,14 @@ var animationFrameHandle;
 function updatePosition(rotationMatrix) {
     var curTime = performance.now();
     var diffTime = curTime - prevTime;
+
+    rotationXVelocity += rotationXAcceleration;
+    rotationXVelocity *= Math.pow(.5, diffTime/1000.0);
+    rotationX += rotationXVelocity;
+    rotationYVelocity += rotationYAcceleration;
+    rotationYVelocity *= Math.pow(.5, diffTime/1000.0);
+    rotationY += rotationYVelocity;
+    console.log(rotationX);
     zDirection += zAcceleration * diffTime / 1000.0
     zDirection *= Math.pow(.5, diffTime/1000);
     var direction = vec3.fromValues(0, 0, zDirection);
@@ -177,7 +191,7 @@ function drawScene() {
     gl.uniform1i(gl.uSamplerUniform, 0);
     gl.drawArrays(gl.POINTS, 0, starVertexPositionBuffer.numItems);
     animationFrameHandle = null;
-    if (zDirection) {
+    if (zDirection || rotationYVelocity || rotationXVelocity) {
         requestUpdate();
     }
 }
@@ -217,17 +231,59 @@ function keyDown(event) {
         event.preventDefault();
         zAcceleration = 0.5;
     }
+    if (event.keyCode == 37) {
+        event.preventDefault();
+        rotationYAcceleration = -0.001;
+        console.log("hi");
+    }
+    if (event.keyCode == 39) {
+        event.preventDefault();
+        rotationYAcceleration = 0.001
+    }
+
+    if (event.keyCode == 'A'.charCodeAt(0)) {
+        event.preventDefault();
+        rotationXAcceleration = -0.001;
+    }
+    if (event.keyCode == 'Z'.charCodeAt(0)) {
+        event.preventDefault();
+        rotationXAcceleration = 0.001;
+    }
     requestUpdate();
 }
 
 function keyUp(event) {
     event.preventDefault();
-    zAcceleration = 0;
+    if (event.keyCode==38) {
+        event.preventDefault();
+        zAcceleration = 0;
+    }
+    if (event.keyCode == 40) {
+        event.preventDefault();
+        zAcceleration = 0;
+    }
+    if (event.keyCode == 37) {
+        event.preventDefault();
+        rotationYAcceleration = 0;
+    }
+    if (event.keyCode == 39) {
+        event.preventDefault();
+        rotationYAcceleration = 0;
+    }
+
+    if (event.keyCode == 'A'.charCodeAt(0)) {
+        event.preventDefault();
+        rotationXAcceleration = 0;
+    }
+    if (event.keyCode == 'Z'.charCodeAt(0)) {
+        event.preventDefault();
+        rotationXAcceleration = 0;
+    }
 }
 
 function initEvents() {
-    canvas.addEventListener("mousedown", mouseDown);
-    document.addEventListener("mouseup", mouseUp);
+    //canvas.addEventListener("mousedown", mouseDown);
+    //document.addEventListener("mouseup", mouseUp);
     document.addEventListener("keydown", keyDown);
     document.addEventListener("keyup", keyUp);
 }
